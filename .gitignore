@@ -1,0 +1,74 @@
+# Environment files (CRITICAL - contains secrets)
+.env
+.env.local
+.env.production
+.env.staging
+
+# Docker volumes and data
+mysql_data/
+docker-volumes/
+redis-data/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Vendor directories (if using Composer)
+vendor/
+
+# Node modules (if using npm)
+node_modules/
+
+# Cache directories
+cache/
+.cache/
+
+# Backup files
+*.bak
+*.backup
+
+# Configuration files with sensitive data
+config/local.php
+config/secrets.php
+
+# Upload directories
+uploads/
+files/
+
+# Session files
+sessions/
+
+# SSH keys (private keys should never be committed)
+*.key
+*.pem
+id_rsa
+id_rsa.pub
+
+# SSL certificates
+*.crt
+ssl/
+
+# Database dumps
+*.sql.gz
+*.sql.bz2
+database-backups/
+
+# GitHub Actions secrets (if any local files)
+.github/workflows/.env
+
+# Docker override files
+docker-compose.override.yml

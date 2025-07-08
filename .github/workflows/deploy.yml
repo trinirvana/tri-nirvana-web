@@ -1,0 +1,249 @@
+name: Deploy to Digital Ocean
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: registry.digitalocean.com/tri-nirvana
+  IMAGE_NAME: tri-nirvana-app
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, json, curl, pdo, pdo_mysql
+        tools: composer:v2
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run tests
+      run: |
+        # Add your test commands here
+        echo "Running PHP tests..."
+        # php vendor/bin/phpunit
+        
+    - name: Check code style
+      run: |
+        # Add code style checks here
+        echo "Checking code style..."
+        # php vendor/bin/phpcs
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always() && (needs.test.result == 'success' || github.event_name != 'pull_request')
+    
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - name: Build container image
+      id: build
+      run: |
+        # Build and tag the image
+        docker build -f Dockerfile.production -t $REGISTRY/$IMAGE_NAME:$GITHUB_SHA .
+        docker tag $REGISTRY/$IMAGE_NAME:$GITHUB_SHA $REGISTRY/$IMAGE_NAME:latest
+        echo "image=$REGISTRY/$IMAGE_NAME:$GITHUB_SHA" >> $GITHUB_OUTPUT
+
+    - name: Log in to DO Container Registry
+      run: doctl registry login --expiry-seconds 1200
+
+    - name: Push image to DO Container Registry
+      run: |
+        docker push $REGISTRY/$IMAGE_NAME:$GITHUB_SHA
+        docker push $REGISTRY/$IMAGE_NAME:latest
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - name: Deploy to staging droplet
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USERNAME }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          # Update environment variables
+          cd /opt/tri-nirvana
+          echo "SUPABASE_URL=${{ secrets.STAGING_SUPABASE_URL }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.STAGING_SUPABASE_ANON_KEY }}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+          echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> .env
+          echo "JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.STAGING_REDIS_PASSWORD }}" >> .env
+          echo "APP_ENV=staging" >> .env
+          echo "APP_DEBUG=false" >> .env
+          
+          # Pull latest images
+          docker login ${{ env.REGISTRY }} -u ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} -p ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          docker pull ${{ needs.build.outputs.image }}
+          
+          # Update docker-compose and restart
+          export IMAGE_TAG=${{ github.sha }}
+          docker-compose -f docker-compose.production.yml down
+          docker-compose -f docker-compose.production.yml up -d
+          
+          # Health check
+          sleep 30
+          curl -f http://localhost/health || exit 1
+          
+          # Cleanup old images
+          docker image prune -f
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - name: Create deployment backup
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          # Create backup before deployment
+          cd /opt/tri-nirvana
+          mkdir -p backups
+          docker-compose -f docker-compose.production.yml exec -T app tar czf /tmp/backup-$(date +%Y%m%d-%H%M%S).tar.gz /var/www/public/uploads
+          docker cp tri-nirvana-app:/tmp/backup-$(date +%Y%m%d-%H%M%S).tar.gz ./backups/
+
+    - name: Deploy to production droplet
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          # Update environment variables
+          cd /opt/tri-nirvana
+          echo "SUPABASE_URL=${{ secrets.PRODUCTION_SUPABASE_URL }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+          echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> .env
+          echo "JWT_SECRET=${{ secrets.PRODUCTION_JWT_SECRET }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.PRODUCTION_REDIS_PASSWORD }}" >> .env
+          echo "APP_ENV=production" >> .env
+          echo "APP_DEBUG=false" >> .env
+          echo "APP_URL=${{ secrets.PRODUCTION_APP_URL }}" >> .env
+          
+          # Pull latest images
+          docker login ${{ env.REGISTRY }} -u ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} -p ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          docker pull ${{ needs.build.outputs.image }}
+          
+          # Rolling update with health checks
+          export IMAGE_TAG=${{ github.sha }}
+          docker-compose -f docker-compose.production.yml up -d --no-deps app
+          
+          # Health check with retry
+          for i in {1..10}; do
+            if curl -f http://localhost/health; then
+              echo "Health check passed"
+              break
+            fi
+            echo "Health check failed, attempt $i/10"
+            sleep 10
+          done
+          
+          # If health check fails, rollback
+          if ! curl -f http://localhost/health; then
+            echo "Deployment failed, rolling back..."
+            docker-compose -f docker-compose.production.yml down
+            docker-compose -f docker-compose.production.yml up -d
+            exit 1
+          fi
+          
+          # Cleanup old images
+          docker image prune -f
+
+    - name: Notify deployment success
+      if: success()
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message: |
+          🚀 Production deployment successful!
+          
+          Repository: ${{ github.repository }}
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+          
+          Time: $(date)
+
+    - name: Notify deployment failure
+      if: failure()
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message: |
+          ❌ Production deployment failed!
+          
+          Repository: ${{ github.repository }}
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+          
+          Please check the logs and fix the issue.

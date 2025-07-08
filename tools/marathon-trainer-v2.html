@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tri Nirvana Marathon Trainer AI v2.0</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .thai-font { font-family: 'Prompt', 'Sarabun', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .zone-1 { background: linear-gradient(90deg, #10B981, #34D399); }
+        .zone-2 { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+        .zone-3 { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+        .zone-4 { background: linear-gradient(90deg, #EF4444, #F87171); }
+        .zone-5 { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="marathon-trainer-app"></div>
+
+    <script type="text/babel">
+    const MarathonTrainerApp = () => {
+        // Enhanced State Management
+        const [user, setUser] = React.useState({
+            name: '',
+            age: 30,
+            gender: 'male',
+            experience: 'intermediate',
+            currentFitness: 5,
+            goalRace: null,
+            trainingHistory: [],
+            preferences: {
+                units: 'metric',
+                language: 'en'
+            }
+        });
+
+        const [currentView, setCurrentView] = React.useState('dashboard');
+        const [trainingPlan, setTrainingPlan] = React.useState(null);
+        const [currentWorkout, setCurrentWorkout] = React.useState(null);
+        const [isPremium, setIsPremium] = React.useState(false);
+        const [isGenerating, setIsGenerating] = React.useState(false);
+        const [showSettings, setShowSettings] = React.useState(false);
+
+        // Training Zones Configuration
+        const trainingZones = {
+            zone1: { name: 'Recovery', intensity: '60-70%', color: 'emerald', description: 'Easy aerobic base building' },
+            zone2: { name: 'Aerobic', intensity: '70-80%', color: 'blue', description: 'Steady aerobic development' },
+            zone3: { name: 'Tempo', intensity: '80-90%', color: 'yellow', description: 'Lactate threshold training' },
+            zone4: { name: 'Lactate', intensity: '90-95%', color: 'red', description: 'VO2 max and speed' },
+            zone5: { name: 'Neuromuscular', intensity: '95-100%', color: 'purple', description: 'Neuromuscular power' }
+        };
+
+        // Enhanced Translation System
+        const translations = {
+            en: {
+                appTitle: 'Marathon Trainer AI v2.0',
+                dashboard: 'Dashboard',
+                training: 'Training',
+                progress: 'Progress',
+                analytics: 'Analytics',
+                settings: 'Settings',
+                premium: 'Premium',
+                todaysWorkout: "Today's Workout",
+                generateWorkout: 'Generate Smart Workout',
+                trainingZones: 'Training Zones',
+                periodization: 'Training Periodization',
+                currentPhase: 'Current Phase',
+                basePhase: 'Base Building',
+                buildPhase: 'Build Phase',
+                peakPhase: 'Peak Phase',
+                taperPhase: 'Taper Phase',
+                recoveryPhase: 'Recovery Phase',
+                workoutType: 'Workout Type',
+                duration: 'Duration',
+                distance: 'Distance',
+                pace: 'Target Pace',
+                heartRate: 'Heart Rate Zone',
+                rpe: 'RPE',
+                instructions: 'Instructions',
+                warmup: 'Warm-up',
+                cooldown: 'Cool-down',
+                intervals: 'Intervals',
+                recovery: 'Recovery',
+                tempo: 'Tempo',
+                longRun: 'Long Run',
+                easyRun: 'Easy Run',
+                hillRepeats: 'Hill Repeats',
+                fartlek: 'Fartlek',
+                raceSimulation: 'Race Simulation',
+                currentFitness: 'Current Fitness Level',
+                goalRace: 'Goal Race',
+                daysToRace: 'Days to Race',
+                estimatedFinishTime: 'Estimated Finish Time',
+                trainingLoad: 'Training Load',
+                weeklyVolume: 'Weekly Volume',
+                save: 'Save',
+                cancel: 'Cancel',
+                edit: 'Edit',
+                delete: 'Delete',
+                minutes: 'min',
+                kilometers: 'km',
+                miles: 'mi',
+                upgradeNow: 'Upgrade Now',
+                premiumFeatures: 'Premium Features',
+                aiCoaching: 'AI Coaching',
+                advancedAnalytics: 'Advanced Analytics',
+                customPlans: 'Custom Training Plans',
+                injuryPrevention: 'Injury Prevention',
+                nutritionGuidance: 'Nutrition Guidance',
+                raceStrategy: 'Race Strategy',
+                dataSync: 'Device Data Sync'
+            },
+            th: {
+                appTitle: 'ครูฝึกมาราธอน AI v2.0',
+                dashboard: 'แดชบอร์ด',
+                training: 'การฝึกซ้อม',
+                progress: 'ความก้าวหน้า',
+                analytics: 'การวิเคราะห์',
+                settings: 'การตั้งค่า',
+                premium: 'พรีเมียม',
+                todaysWorkout: 'การฝึกซ้อมวันนี้',
+                generateWorkout: 'สร้างโปรแกรมฝึกซ้อมอัจฉริยะ',
+                trainingZones: 'โซนการฝึกซ้อม',
+                periodization: 'การแบ่งช่วงการฝึกซ้อม',
+                currentPhase: 'ช่วงปัจจุบัน',
+                basePhase: 'ช่วงสร้างฐาน',
+                buildPhase: 'ช่วงพัฒนา',
+                peakPhase: 'ช่วงจุดสูงสุด',
+                taperPhase: 'ช่วงลดปริมาณ',
+                recoveryPhase: 'ช่วงฟื้นฟู',
+                workoutType: 'ประเภทการฝึกซ้อม',
+                duration: 'ระยะเวลา',
+                distance: 'ระยะทาง',
+                pace: 'ความเร็วเป้าหมาย',
+                heartRate: 'โซนอัตราการเต้นหัวใจ',
+                rpe: 'ความเหนื่อย',
+                instructions: 'คำแนะนำ',
+                warmup: 'อบอุ่นร่างกาย',
+                cooldown: 'คลายกล้ามเนื้อ',
+                intervals: 'วิ่งแบบช่วง',
+                recovery: 'ฟื้นฟู',
+                tempo: 'เทมโป',
+                longRun: 'วิ่งระยะไกล',
+                easyRun: 'วิ่งสบาย',
+                hillRepeats: 'วิ่งขึ้นเขา',
+                fartlek: 'ฟาร์ทเล็ค',
+                raceSimulation: 'จำลองการแข่งขัน',
+                currentFitness: 'ระดับความฟิตปัจจุบัน',
+                goalRace: 'การแข่งขันเป้าหมาย',
+                daysToRace: 'วันที่เหลือ',
+                estimatedFinishTime: 'เวลาที่คาดว่าจะจบ',
+                trainingLoad: 'ปริมาณการฝึกซ้อม',
+                weeklyVolume: 'ปริมาณรายสัปดาห์',
+                save: 'บันทึก',
+                cancel: 'ยกเลิก',
+                edit: 'แก้ไข',
+                delete: 'ลบ',
+                minutes: 'นาที',
+                kilometers: 'กม.',
+                miles: 'ไมล์',
+                upgradeNow: 'อัพเกรดเลย',
+                premiumFeatures: 'ฟีเจอร์พรีเมียม',
+                aiCoaching: 'การโค้ชด้วย AI',
+                advancedAnalytics: 'การวิเคราะห์ขั้นสูง',
+                customPlans: 'แผนฝึกซ้อมเฉพาะบุคคล',
+                injuryPrevention: 'การป้องกันการบาดเจ็บ',
+                nutritionGuidance: 'คำแนะนำโภชนาการ',
+                raceStrategy: 'กลยุทธ์การแข่งขัน',
+                dataSync: 'ซิงค์ข้อมูลอุปกรณ์'
+            }
+        };
+
+        const t = (key) => translations[user.preferences.language][key] || key;
+
+        // Enhanced Workout Generation with AI Logic
+        const generateSmartWorkout = () => {
+            setIsGenerating(true);
+            
+            setTimeout(() => {
+                const today = new Date().getDay();
+                const currentPhase = getCurrentTrainingPhase();
+                const fitness = user.currentFitness;
+                const experience = user.experience;
+                
+                let workoutType, duration, distance, pace, heartRateZone, rpe, instructions;
+                
+                // Smart workout selection based on multiple factors
+                if (today === 0 || today === 6) { // Weekend
+                    if (currentPhase === 'base') {
+                        workoutType = 'longRun';
+                        duration = 90 + (fitness * 10);
+                        distance = 15 + (fitness * 2);
+                        pace = '5:30-6:00';
+                        heartRateZone = 'zone2';
+                        rpe = 6;
+                        instructions = 'Build aerobic base with steady long run. Focus on conversational pace and proper fueling.';
+                    } else if (currentPhase === 'build') {
+                        workoutType = 'raceSimulation';
+                        duration = 120;
+                        distance = 20;
+                        pace = '5:00-5:15';
+                        heartRateZone = 'zone3';
+                        rpe = 7;
+                        instructions = 'Race simulation run. Start easy, build to marathon pace for middle portion, finish strong.';
+                    }
+                } else if (today === 2 || today === 4) { // Tuesday/Thursday - Quality days
+                    if (currentPhase === 'base') {
+                        workoutType = 'tempo';
+                        duration = 45;
+                        distance = 8;
+                        pace = '4:45-5:00';
+                        heartRateZone = 'zone3';
+                        rpe = 7;
+                        instructions = '10min warm-up, 25min tempo, 10min cool-down. Tempo should feel comfortably hard.';
+                    } else if (currentPhase === 'build') {
+                        workoutType = 'intervals';
+                        duration = 60;
+                        distance = 10;
+                        pace = '4:15-4:30';
+                        heartRateZone = 'zone4';
+                        rpe = 8;
+                        instructions = 'Warm-up 15min, 6x1000m at 5K pace with 2min recovery, cool-down 15min.';
+                    }
+                } else { // Easy days
+                    workoutType = 'easyRun';
+                    duration = 40;
+                    distance = 6;
+                    pace = '6:00-6:30';
+                    heartRateZone = 'zone1';
+                    rpe = 4;
+                    instructions = 'Easy recovery run. Keep effort conversational and focus on form.';
+                }
+                
+                setCurrentWorkout({
+                    type: workoutType,
+                    duration,
+                    distance,
+                    pace,
+                    heartRateZone,
+                    rpe,
+                    instructions,
+                    warmup: '10min easy jog + dynamic stretches',
+                    cooldown: '10min walk + static stretches',
+                    date: new Date().toISOString().split('T')[0]
+                });
+                
+                setIsGenerating(false);
+            }, 2500);
+        };
+
+        // Get current training phase based on goal race
+        const getCurrentTrainingPhase = () => {
+            if (!user.goalRace) return 'base';
+            
+            const raceDate = new Date(user.goalRace.date);
+            const today = new Date();
+            const daysToRace = Math.ceil((raceDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysToRace > 84) return 'base';
+            if (daysToRace > 42) return 'build';
+            if (daysToRace > 14) return 'peak';
+            if (daysToRace > 0) return 'taper';
+            return 'recovery';
+        };
+
+        // Enhanced UI Components
+        const ZoneCard = ({ zone, zoneData }) => (
+            <div className={`p-4 rounded-lg text-white ${zone === 'zone1' ? 'zone-1' : zone === 'zone2' ? 'zone-2' : zone === 'zone3' ? 'zone-3' : zone === 'zone4' ? 'zone-4' : 'zone-5'} card-shadow`}>
+                <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold">{zoneData.name}</h4>
+                    <span className="text-sm opacity-90">{zoneData.intensity}</span>
+                </div>
+                <p className="text-sm opacity-80">{zoneData.description}</p>
+            </div>
+        );
+
+        const WorkoutCard = ({ workout }) => {
+            if (!workout) return null;
+            
+            const zoneData = trainingZones[workout.heartRateZone];
+            
+            return (
+                <div className="bg-white rounded-lg p-6 card-shadow">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-semibold text-gray-800">{t(workout.type)}</h3>
+                        <div className={`px-3 py-1 rounded-full text-white text-sm font-medium ${workout.heartRateZone === 'zone1' ? 'bg-emerald-500' : workout.heartRateZone === 'zone2' ? 'bg-blue-500' : workout.heartRateZone === 'zone3' ? 'bg-yellow-500' : workout.heartRateZone === 'zone4' ? 'bg-red-500' : 'bg-purple-500'}`}>
+                            {zoneData.name}
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-gray-50 p-3 rounded">
+                            <div className="text-sm text-gray-600">{t('duration')}</div>
+                            <div className="font-semibold">{workout.duration} {t('minutes')}</div>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded">
+                            <div className="text-sm text-gray-600">{t('distance')}</div>
+                            <div className="font-semibold">{workout.distance} {t('kilometers')}</div>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded">
+                            <div className="text-sm text-gray-600">{t('pace')}</div>
+                            <div className="font-semibold">{workout.pace}</div>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded">
+                            <div className="text-sm text-gray-600">{t('rpe')}</div>
+                            <div className="font-semibold">{workout.rpe}/10</div>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        <div>
+                            <h4 className="font-medium text-gray-700 mb-1">{t('warmup')}</h4>
+                            <p className="text-sm text-gray-600">{workout.warmup}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-medium text-gray-700 mb-1">{t('instructions')}</h4>
+                            <p className="text-sm text-gray-600">{workout.instructions}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-medium text-gray-700 mb-1">{t('cooldown')}</h4>
+                            <p className="text-sm text-gray-600">{workout.cooldown}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-4 flex space-x-2">
+                        <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                            {t('save')}
+                        </button>
+                        <button 
+                            onClick={generateSmartWorkout}
+                            className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                        >
+                            Regenerate
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const LoadingAnimation = () => (
+            <div className="bg-white rounded-lg p-8 card-shadow">
+                <div className="flex flex-col items-center">
+                    <div className="relative w-16 h-16 mb-4">
+                        <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">AI Analyzing Your Training</h3>
+                    <p className="text-gray-600 text-center">
+                        Processing your fitness level, training history, and goals to create the perfect workout...
+                    </p>
+                </div>
+            </div>
+        );
+
+        // Dashboard View
+        const DashboardView = () => (
+            <div className="space-y-6">
+                {/* Header Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white p-4 rounded-lg card-shadow">
+                        <div className="text-sm text-gray-600">{t('currentFitness')}</div>
+                        <div className="text-2xl font-bold text-blue-600">{user.currentFitness}/10</div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg card-shadow">
+                        <div className="text-sm text-gray-600">{t('currentPhase')}</div>
+                        <div className="text-2xl font-bold text-green-600">{t(getCurrentTrainingPhase() + 'Phase')}</div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg card-shadow">
+                        <div className="text-sm text-gray-600">{t('weeklyVolume')}</div>
+                        <div className="text-2xl font-bold text-purple-600">45 {t('kilometers')}</div>
+                    </div>
+                </div>
+
+                {/* Today's Workout */}
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-gray-800">{t('todaysWorkout')}</h2>
+                        <button 
+                            onClick={generateSmartWorkout}
+                            disabled={isGenerating}
+                            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                            {t('generateWorkout')}
+                        </button>
+                    </div>
+                    
+                    {isGenerating ? <LoadingAnimation /> : <WorkoutCard workout={currentWorkout} />}
+                </div>
+
+                {/* Training Zones */}
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('trainingZones')}</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(trainingZones).map(([zone, data]) => (
+                            <ZoneCard key={zone} zone={zone} zoneData={data} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Navigation
+        const Navigation = () => (
+            <nav className="bg-white border-b border-gray-200 px-6 py-4">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-2xl font-bold gradient-bg bg-clip-text text-transparent">
+                        {t('appTitle')}
+                    </h1>
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={() => setUser(prev => ({...prev, preferences: {...prev.preferences, language: prev.preferences.language === 'en' ? 'th' : 'en'}}))}
+                            className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                        >
+                            {user.preferences.language === 'en' ? 'ไทย' : 'ENG'}
+                        </button>
+                        {!isPremium && (
+                            <button 
+                                onClick={() => setIsPremium(true)}
+                                className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:from-yellow-500 hover:to-orange-600 transition-all"
+                            >
+                                {t('upgradeNow')}
+                            </button>
+                        )}
+                        <div className={`px-3 py-1 rounded-full text-sm font-medium ${isPremium ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {isPremium ? t('premium') : 'Free'}
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        );
+
+        // Main App Layout
+        return (
+            <div className={`min-h-screen bg-gray-50 ${user.preferences.language === 'th' ? 'thai-font' : ''}`}>
+                <Navigation />
+                <main className="max-w-7xl mx-auto px-4 py-8">
+                    <DashboardView />
+                </main>
+            </div>
+        );
+    };
+
+    // Render the app
+    ReactDOM.render(<MarathonTrainerApp />, document.getElementById('marathon-trainer-app'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: tri-nirvana-web
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=tri_nirvana
+      - DB_USER=root
+      - DB_PASS=rootpass
+    networks:
+      - tri-nirvana-network
+
+  db:
+    image: mysql:8.0
+    container_name: tri-nirvana-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: tri_nirvana
+      MYSQL_USER: triuser
+      MYSQL_PASSWORD: tripass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - tri-nirvana-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: tri-nirvana-phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: rootpass
+    depends_on:
+      - db
+    networks:
+      - tri-nirvana-network
+
+volumes:
+  mysql_data:
+
+networks:
+  tri-nirvana-network:
+    driver: bridge

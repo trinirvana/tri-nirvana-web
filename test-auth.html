@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Authentication Test - Tri Nirvana</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { border-color: #4CAF50; background: #f8fff8; }
+        .error { border-color: #f44336; background: #fff8f8; }
+        .pending { border-color: #ff9800; background: #fffaf0; }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .auth-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-status" id="authStatus">
+        Not Connected
+    </div>
+
+    <div class="container">
+        <h1>🚀 Supabase Authentication Test</h1>
+        <p>Testing the Tri Nirvana AI Platform authentication system</p>
+
+        <!-- Connection Test -->
+        <div class="test-section pending" id="connectionTest">
+            <h3>1. Supabase Connection Test</h3>
+            <p>Testing connection to Supabase...</p>
+            <div class="result" id="connectionResult">Initializing...</div>
+        </div>
+
+        <!-- Database Schema Test -->
+        <div class="test-section pending" id="schemaTest">
+            <h3>2. Database Schema Test</h3>
+            <p>Testing if database tables exist...</p>
+            <button onclick="testSchema()">Test Schema</button>
+            <div class="result" id="schemaResult">Click button to test</div>
+        </div>
+
+        <!-- Authentication Test -->
+        <div class="test-section pending" id="authTest">
+            <h3>3. Authentication Test</h3>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">
+                    <h4>Sign Up Test</h4>
+                    <input type="email" id="signupEmail" placeholder="test@example.com" value="test@trinirvana.com">
+                    <input type="password" id="signupPassword" placeholder="password" value="testpassword123">
+                    <button onclick="testSignUp()">Test Sign Up</button>
+                </div>
+                <div style="flex: 1;">
+                    <h4>Sign In Test</h4>
+                    <input type="email" id="signinEmail" placeholder="test@example.com" value="test@trinirvana.com">
+                    <input type="password" id="signinPassword" placeholder="password" value="testpassword123">
+                    <button onclick="testSignIn()">Test Sign In</button>
+                </div>
+            </div>
+            <button onclick="testSignOut()">Sign Out</button>
+            <div class="result" id="authResult">No auth tests run yet</div>
+        </div>
+
+        <!-- API Test -->
+        <div class="test-section pending" id="apiTest">
+            <h3>4. Race Prediction API Test</h3>
+            <p>Testing the race prediction Edge Function...</p>
+            <button onclick="testRacePrediction()">Test Race Prediction API</button>
+            <div class="result" id="apiResult">Click button to test</div>
+        </div>
+
+        <!-- Analytics Test -->
+        <div class="test-section pending" id="analyticsTest">
+            <h3>5. Analytics Test</h3>
+            <p>Testing analytics tracking...</p>
+            <button onclick="testAnalytics()">Test Analytics</button>
+            <div class="result" id="analyticsResult">Click button to test</div>
+        </div>
+    </div>
+
+    <!-- Load Supabase and Authentication -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="public/js/supabase-auth.js"></script>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://lwjudzphytpjywnzcxlu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3anVkenBoeXRwanl3bnpjeGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4MDMzMjcsImV4cCI6MjA2NTM3OTMyN30.9RFekS9u9KO-eLyLfLQ3uTcELEEKAhz8JSUPR8_wSRw';
+
+        let supabaseManager;
+
+        // Initialize everything
+        async function init() {
+            try {
+                supabaseManager = new SupabaseManager(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                // Wait for initialization
+                await new Promise(resolve => {
+                    const checkInit = () => {
+                        if (supabaseManager.isInitialized) {
+                            resolve();
+                        } else {
+                            setTimeout(checkInit, 100);
+                        }
+                    };
+                    checkInit();
+                });
+
+                // Test connection
+                await testConnection();
+
+                // Listen for auth changes
+                supabaseManager.onAuthStateChange((event, session) => {
+                    updateAuthStatus(session);
+                });
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                updateResult('connectionResult', 'ERROR: ' + error.message, 'error');
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch(SUPABASE_URL + '/rest/v1/', {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    updateResult('connectionResult', 'SUCCESS: Connected to Supabase', 'success');
+                    document.getElementById('connectionTest').className = 'test-section success';
+                } else {
+                    throw new Error('Connection failed with status: ' + response.status);
+                }
+            } catch (error) {
+                updateResult('connectionResult', 'ERROR: ' + error.message, 'error');
+                document.getElementById('connectionTest').className = 'test-section error';
+            }
+        }
+
+        async function testSchema() {
+            try {
+                // Test race_distances table
+                const response = await fetch(SUPABASE_URL + '/rest/v1/race_distances?limit=1', {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult('schemaResult', `SUCCESS: Schema exists. Found ${data.length > 0 ? 'data' : 'empty table'}`, 'success');
+                    document.getElementById('schemaTest').className = 'test-section success';
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Schema test failed');
+                }
+            } catch (error) {
+                updateResult('schemaResult', 'ERROR: ' + error.message + '\n\nYou need to run the SQL schema in Supabase Dashboard!', 'error');
+                document.getElementById('schemaTest').className = 'test-section error';
+            }
+        }
+
+        async function testSignUp() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const result = await supabaseManager.signUp(email, password, {
+                    displayName: 'Test User',
+                    experienceLevel: 'intermediate'
+                });
+
+                updateResult('authResult', `Sign Up: ${result.success ? 'SUCCESS' : 'ERROR: ' + result.error}`, result.success ? 'success' : 'error');
+            } catch (error) {
+                updateResult('authResult', 'Sign Up ERROR: ' + error.message, 'error');
+            }
+        }
+
+        async function testSignIn() {
+            const email = document.getElementById('signinEmail').value;
+            const password = document.getElementById('signinPassword').value;
+
+            try {
+                const result = await supabaseManager.signIn(email, password);
+                updateResult('authResult', `Sign In: ${result.success ? 'SUCCESS' : 'ERROR: ' + result.error}`, result.success ? 'success' : 'error');
+                
+                if (result.success) {
+                    document.getElementById('authTest').className = 'test-section success';
+                }
+            } catch (error) {
+                updateResult('authResult', 'Sign In ERROR: ' + error.message, 'error');
+            }
+        }
+
+        async function testSignOut() {
+            try {
+                const result = await supabaseManager.signOut();
+                updateResult('authResult', `Sign Out: ${result.success ? 'SUCCESS' : 'ERROR: ' + result.error}`, result.success ? 'success' : 'error');
+            } catch (error) {
+                updateResult('authResult', 'Sign Out ERROR: ' + error.message, 'error');
+            }
+        }
+
+        async function testRacePrediction() {
+            try {
+                const predictionData = {
+                    distance: 'Olympic Triathlon',
+                    swimPace: '2:00',
+                    bikeSpeed: 35,
+                    runPace: '5:00',
+                    experience: 'intermediate'
+                };
+
+                // Use local API endpoint instead of Supabase Edge Function
+                const response = await fetch('/api/race-prediction.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-session-id': supabaseManager.sessionId
+                    },
+                    body: JSON.stringify({ data: predictionData })
+                });
+
+                const result = await response.json();
+                
+                updateResult('apiResult', `Race Prediction API: ${result.success ? 'SUCCESS: ' + JSON.stringify(result.prediction, null, 2) : 'ERROR: ' + result.error}`, result.success ? 'success' : 'error');
+                
+                if (result.success) {
+                    document.getElementById('apiTest').className = 'test-section success';
+                }
+            } catch (error) {
+                updateResult('apiResult', 'Race Prediction ERROR: ' + error.message, 'error');
+            }
+        }
+
+        async function testAnalytics() {
+            try {
+                await supabaseManager.trackEvent('test', 'authentication_test', {
+                    test_type: 'full_system_test',
+                    timestamp: new Date().toISOString()
+                });
+
+                updateResult('analyticsResult', 'SUCCESS: Analytics event tracked', 'success');
+                document.getElementById('analyticsTest').className = 'test-section success';
+            } catch (error) {
+                updateResult('analyticsResult', 'Analytics ERROR: ' + error.message, 'error');
+            }
+        }
+
+        function updateResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'result ' + type;
+        }
+
+        function updateAuthStatus(session) {
+            const statusElement = document.getElementById('authStatus');
+            if (session && session.user) {
+                statusElement.textContent = `Authenticated: ${session.user.email}`;
+                statusElement.style.background = '#4CAF50';
+            } else {
+                statusElement.textContent = 'Not Authenticated';
+                statusElement.style.background = '#333';
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tri Nirvana Marathon Trainer AI - Fixed Premium Edition</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        
+        .thai-font { 
+            font-family: 'Prompt', 'Inter', sans-serif; 
+            letter-spacing: 0.025em;
+        }
+        
+        /* Glass Morphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-slide-up { animation: slideInUp 0.6s ease-out; }
+        .animate-scale-in { animation: scaleIn 0.4s ease-out; }
+        
+        /* Premium Button Effects */
+        .btn-premium {
+            position: relative;
+            overflow: hidden;
+            transform: perspective(1px) translateZ(0);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .btn-premium:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-premium:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* Custom Input Styles - FIXED */
+        .input-premium {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            color: #1a202c;
+        }
+        
+        .input-premium:focus {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            outline: none;
+        }
+        
+        .input-premium::placeholder {
+            color: rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Custom Slider */
+        .slider-premium {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 50px;
+            background: linear-gradient(90deg, #11998e 0%, #f093fb 50%, #f5576c 100%);
+            outline: none;
+            position: relative;
+        }
+        
+        .slider-premium::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .slider-premium::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        /* Zone Cards */
+        .zone-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .zone-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Notification -->
+    <div id="notification" class="notification glass rounded-lg p-4 text-white">
+        <div class="flex items-center space-x-3">
+            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4" fill="white" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <span id="notification-text">Action completed!</span>
+        </div>
+    </div>
+    
+    <div id="marathon-trainer-app"></div>
+
+    <script type="text/babel">
+    const { useState, useCallback, useEffect, memo } = React;
+
+    // Fixed Input Component
+    const PremiumInput = memo(({ label, type = "text", value, onChange, placeholder, min, max, children }) => {
+        return (
+            <div className="space-y-2">
+                <label className="block text-sm font-semibold text-white">{label}</label>
+                {children || (
+                    <input
+                        type={type}
+                        value={value || ''}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        min={min}
+                        max={max}
+                        className="w-full p-4 rounded-xl input-premium text-gray-800 font-medium placeholder-gray-500"
+                    />
+                )}
+            </div>
+        );
+    });
+
+    // Fixed Slider Component
+    const PremiumSlider = memo(({ label, value, onChange, min = 1, max = 10, description }) => {
+        return (
+            <div className="space-y-3">
+                <label className="block text-sm font-semibold text-white">{label}</label>
+                <div className="flex items-center space-x-4">
+                    <input
+                        type="range"
+                        min={min}
+                        max={max}
+                        value={value || min}
+                        onChange={onChange}
+                        className="flex-1 slider-premium"
+                    />
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-white to-gray-100 flex items-center justify-center shadow-lg">
+                        <span className="text-xl font-bold text-gray-800">{value}</span>
+                    </div>
+                </div>
+                {description && (
+                    <p className="text-sm text-white opacity-80">{description}</p>
+                )}
+            </div>
+        );
+    });
+
+    const MarathonTrainerApp = () => {
+        // State Management - Fixed with proper initialization
+        const [user, setUser] = useState({
+            name: '',
+            age: 30,
+            gender: 'male',
+            experience: 'beginner',
+            currentFitness: 5,
+            currentRPE: 5,
+            goalRace: { distance: '', date: '' },
+            weeklyMileage: 20,
+            preferences: {
+                units: 'metric',
+                language: 'en'
+            },
+            isProfileComplete: false
+        });
+
+        const [currentView, setCurrentView] = useState('setup');
+        const [currentWorkout, setCurrentWorkout] = useState(null);
+        const [isGenerating, setIsGenerating] = useState(false);
+        const [showNotification, setShowNotification] = useState(false);
+
+        // Translation System
+        const translations = {
+            en: {
+                appTitle: 'Marathon Trainer AI',
+                subtitle: 'Fixed Premium Edition',
+                profileSetup: 'Complete Your Profile',
+                personalInfo: 'Personal Information',
+                name: 'Your Name',
+                age: 'Age',
+                gender: 'Gender',
+                male: 'Male',
+                female: 'Female',
+                experience: 'Running Experience',
+                beginner: 'Beginner (0-1 years)',
+                intermediate: 'Intermediate (1-3 years)',
+                advanced: 'Advanced (3+ years)',
+                currentFitness: 'Current Fitness Level',
+                currentCondition: 'How do you feel today?',
+                weeklyMileage: 'Weekly Mileage (km)',
+                goalRace: 'Goal Race',
+                raceDistance: 'Race Distance',
+                raceDate: 'Target Race Date',
+                selectRace: 'Select a race distance...',
+                marathon: 'Marathon (42.2km)',
+                halfMarathon: 'Half Marathon (21.1km)',
+                tenK: '10K',
+                fiveK: '5K',
+                completeSetup: 'Start My Training Journey',
+                dashboard: 'Dashboard',
+                todaysWorkout: "Today's AI-Powered Workout",
+                generateWorkout: 'Generate Perfect Workout',
+                editProfile: 'Edit Profile',
+                workoutType: 'Workout Type',
+                duration: 'Duration',
+                distance: 'Distance',
+                minutes: 'min',
+                kilometers: 'km',
+                instructions: 'Instructions',
+                warmup: 'Warm-up',
+                cooldown: 'Cool-down',
+                recovery: 'Recovery Run',
+                tempo: 'Tempo Run',
+                intervals: 'Interval Training',
+                longRun: 'Long Run',
+                easyRun: 'Easy Run',
+                raceSimulation: 'Race Simulation',
+                fresh: 'Feeling Fresh',
+                good: 'Feeling Good',
+                moderate: 'Moderate',
+                tired: 'A Bit Tired',
+                exhausted: 'Very Tired',
+                trainingZones: 'Training Zones'
+            },
+            th: {
+                appTitle: 'ครูฝึกมาราธอน AI',
+                subtitle: 'เวอร์ชั่นพรีเมียมที่แก้ไขแล้ว',
+                profileSetup: 'ตั้งค่าโปรไฟล์ของคุณ',
+                personalInfo: 'ข้อมูลส่วนตัว',
+                name: 'ชื่อของคุณ',
+                age: 'อายุ',
+                gender: 'เพศ',
+                male: 'ชาย',
+                female: 'หญิง',
+                experience: 'ประสบการณ์การวิ่ง',
+                beginner: 'มือใหม่ (0-1 ปี)',
+                intermediate: 'ปานกลาง (1-3 ปี)',
+                advanced: 'ขั้นสูง (3+ ปี)',
+                currentFitness: 'ระดับความฟิตปัจจุบัน',
+                currentCondition: 'คุณรู้สึกอย่างไรวันนี้?',
+                weeklyMileage: 'ระยะทางรายสัปดาห์ (กม.)',
+                goalRace: 'การแข่งขันเป้าหมาย',
+                raceDistance: 'ระยะทางการแข่งขัน',
+                raceDate: 'วันที่แข่งขันเป้าหมาย',
+                selectRace: 'เลือกระยะทางการแข่งขัน...',
+                marathon: 'มาราธอน (42.2กม.)',
+                halfMarathon: 'ฮาล์ฟมาราธอน (21.1กม.)',
+                tenK: '10กม.',
+                fiveK: '5กม.',
+                completeSetup: 'เริ่มต้นการฝึกซ้อมของฉัน',
+                dashboard: 'แดชบอร์ด',
+                todaysWorkout: 'โปรแกรมฝึกซ้อม AI วันนี้',
+                generateWorkout: 'สร้างโปรแกรมฝึกซ้อมที่สมบูรณ์แบบ',
+                editProfile: 'แก้ไขโปรไฟล์',
+                workoutType: 'ประเภทการฝึกซ้อม',
+                duration: 'ระยะเวลา',
+                distance: 'ระยะทาง',
+                minutes: 'นาที',
+                kilometers: 'กม.',
+                instructions: 'คำแนะนำ',
+                warmup: 'อบอุ่นร่างกาย',
+                cooldown: 'คลายกล้ามเนื้อ',
+                recovery: 'วิ่งฟื้นฟู',
+                tempo: 'วิ่งเทมโป',
+                intervals: 'วิ่งแบบช่วง',
+                longRun: 'วิ่งระยะไกล',
+                easyRun: 'วิ่งสบาย',
+                raceSimulation: 'จำลองการแข่งขัน',
+                fresh: 'รู้สึกสดชื่น',
+                good: 'รู้สึกดี',
+                moderate: 'ปานกลาง',
+                tired: 'เหนื่อยเล็กน้อย',
+                exhausted: 'เหนื่อยมาก',
+                trainingZones: 'โซนการฝึกซ้อม'
+            }
+        };
+
+        const t = (key) => translations[user.preferences.language][key] || key;
+
+        // RPE Descriptions
+        const rpeDescriptions = {
+            1: 'fresh', 2: 'fresh', 3: 'good', 4: 'good', 
+            5: 'moderate', 6: 'moderate', 7: 'tired', 
+            8: 'tired', 9: 'exhausted', 10: 'exhausted'
+        };
+
+        // Training Zones Data
+        const trainingZones = [
+            { id: 'zone1', name: 'Recovery Zone', intensity: '60-70%', color: 'from-green-400 to-green-600' },
+            { id: 'zone2', name: 'Aerobic Base', intensity: '70-80%', color: 'from-blue-400 to-blue-600' },
+            { id: 'zone3', name: 'Tempo Zone', intensity: '80-90%', color: 'from-yellow-400 to-yellow-600' },
+            { id: 'zone4', name: 'Lactate Threshold', intensity: '90-95%', color: 'from-red-400 to-red-600' },
+            { id: 'zone5', name: 'Neuromuscular Power', intensity: '95-100%', color: 'from-purple-400 to-purple-600' }
+        ];
+
+        // Fixed callback functions
+        const updateName = useCallback((e) => {
+            setUser(prev => ({ ...prev, name: e.target.value }));
+        }, []);
+
+        const updateAge = useCallback((e) => {
+            setUser(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }));
+        }, []);
+
+        const updateGender = useCallback((e) => {
+            setUser(prev => ({ ...prev, gender: e.target.value }));
+        }, []);
+
+        const updateExperience = useCallback((e) => {
+            setUser(prev => ({ ...prev, experience: e.target.value }));
+        }, []);
+
+        const updateFitness = useCallback((e) => {
+            setUser(prev => ({ ...prev, currentFitness: parseInt(e.target.value) }));
+        }, []);
+
+        const updateRPE = useCallback((e) => {
+            setUser(prev => ({ ...prev, currentRPE: parseInt(e.target.value) }));
+        }, []);
+
+        const updateMileage = useCallback((e) => {
+            setUser(prev => ({ ...prev, weeklyMileage: parseInt(e.target.value) || 0 }));
+        }, []);
+
+        const updateRaceDistance = useCallback((e) => {
+            setUser(prev => ({ 
+                ...prev, 
+                goalRace: { ...prev.goalRace, distance: e.target.value }
+            }));
+        }, []);
+
+        const updateRaceDate = useCallback((e) => {
+            setUser(prev => ({ 
+                ...prev, 
+                goalRace: { ...prev.goalRace, date: e.target.value }
+            }));
+        }, []);
+
+        // Show notification
+        const showNotificationMessage = useCallback((message) => {
+            document.getElementById('notification-text').textContent = message;
+            setShowNotification(true);
+            setTimeout(() => setShowNotification(false), 3000);
+        }, []);
+
+        // Enhanced Workout Generation
+        const generateSmartWorkout = useCallback(() => {
+            setIsGenerating(true);
+            
+            setTimeout(() => {
+                const today = new Date().getDay();
+                const fitness = user.currentFitness;
+                const currentRPE = user.currentRPE;
+                const experience = user.experience;
+                const weeklyMileage = user.weeklyMileage;
+                
+                let workoutType, duration, distance, pace, rpe, instructions;
+                
+                // Smart workout logic based on current condition
+                if (currentRPE <= 4) {
+                    workoutType = 'intervals';
+                    duration = 45 + (fitness * 3);
+                    distance = Math.round(6 + fitness);
+                    pace = experience === 'beginner' ? '5:00-5:15' : experience === 'intermediate' ? '4:30-4:45' : '4:00-4:15';
+                    rpe = 8;
+                    instructions = `High-quality interval session. You're feeling ${t(rpeDescriptions[currentRPE])}, so push the pace! 15min warm-up, 6x800m at 5K pace with 90sec recovery, 10min cool-down.`;
+                } else if (currentRPE >= 7) {
+                    workoutType = 'recovery';
+                    duration = 25 + (fitness * 2);
+                    distance = Math.round(3 + (fitness * 0.5));
+                    pace = '7:00-7:30';
+                    rpe = 3;
+                    instructions = `Easy recovery run. You're feeling ${t(rpeDescriptions[currentRPE])}, so prioritize movement and blood flow over intensity.`;
+                } else {
+                    workoutType = 'tempo';
+                    duration = 40 + (fitness * 2);
+                    distance = Math.round(5 + (fitness * 0.8));
+                    pace = experience === 'beginner' ? '5:30-5:45' : experience === 'intermediate' ? '5:00-5:15' : '4:30-4:45';
+                    rpe = 7;
+                    instructions = `Tempo run session. 10min warm-up, ${Math.round(20 + fitness * 2)}min at comfortably hard pace, 10min cool-down.`;
+                }
+                
+                setCurrentWorkout({
+                    type: workoutType,
+                    duration,
+                    distance,
+                    pace,
+                    rpe,
+                    instructions,
+                    warmup: '10min easy jog + dynamic stretches',
+                    cooldown: '10min walk + static stretches',
+                    personalizedFor: {
+                        name: user.name,
+                        currentRPE: currentRPE,
+                        fitness: fitness,
+                        experience: experience
+                    }
+                });
+                
+                setIsGenerating(false);
+                showNotificationMessage('Perfect workout generated!');
+            }, 2500);
+        }, [user, t, rpeDescriptions, showNotificationMessage]);
+
+        // Toggle language
+        const toggleLanguage = useCallback(() => {
+            setUser(prev => ({
+                ...prev,
+                preferences: {
+                    ...prev.preferences,
+                    language: prev.preferences.language === 'en' ? 'th' : 'en'
+                }
+            }));
+        }, []);
+
+        // Complete setup
+        const completeSetup = useCallback(() => {
+            setUser(prev => ({ ...prev, isProfileComplete: true }));
+            setCurrentView('dashboard');
+            showNotificationMessage('Profile completed successfully!');
+        }, [showNotificationMessage]);
+
+        // Training Zone Card
+        const ZoneCard = memo(({ zone }) => (
+            <div className="zone-card glass rounded-xl p-6 text-white relative overflow-hidden">
+                <div className={`absolute inset-0 bg-gradient-to-br ${zone.color} opacity-20`}></div>
+                <div className="relative z-10">
+                    <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-bold text-lg">{zone.name}</h4>
+                        <span className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">{zone.intensity}</span>
+                    </div>
+                    <p className="text-sm opacity-90">Training zone for optimal performance</p>
+                </div>
+            </div>
+        ));
+
+        // Profile Setup Component
+        const ProfileSetup = () => (
+            <div className="animate-slide-up">
+                <div className="max-w-4xl mx-auto p-6">
+                    <div className="glass rounded-3xl p-8 text-white">
+                        <div className="text-center mb-8">
+                            <h2 className="text-4xl font-bold mb-2">{t('profileSetup')}</h2>
+                            <p className="text-lg opacity-80">Let's create your perfect training experience</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Personal Information */}
+                            <div className="space-y-6">
+                                <h3 className="text-2xl font-bold mb-4">{t('personalInfo')}</h3>
+                                
+                                <PremiumInput
+                                    label={t('name')}
+                                    value={user.name}
+                                    onChange={updateName}
+                                    placeholder="Enter your name"
+                                />
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <PremiumInput
+                                        label={t('age')}
+                                        type="number"
+                                        value={user.age}
+                                        onChange={updateAge}
+                                        min="10"
+                                        max="80"
+                                    />
+                                    
+                                    <PremiumInput label={t('gender')}>
+                                        <select
+                                            value={user.gender}
+                                            onChange={updateGender}
+                                            className="w-full p-4 rounded-xl input-premium text-gray-800 font-medium"
+                                        >
+                                            <option value="male">{t('male')}</option>
+                                            <option value="female">{t('female')}</option>
+                                        </select>
+                                    </PremiumInput>
+                                </div>
+                                
+                                <PremiumInput label={t('experience')}>
+                                    <select
+                                        value={user.experience}
+                                        onChange={updateExperience}
+                                        className="w-full p-4 rounded-xl input-premium text-gray-800 font-medium"
+                                    >
+                                        <option value="beginner">{t('beginner')}</option>
+                                        <option value="intermediate">{t('intermediate')}</option>
+                                        <option value="advanced">{t('advanced')}</option>
+                                    </select>
+                                </PremiumInput>
+                            </div>
+
+                            {/* Fitness & Goals */}
+                            <div className="space-y-6">
+                                <h3 className="text-2xl font-bold mb-4">Fitness & Goals</h3>
+                                
+                                <PremiumSlider
+                                    label={t('currentFitness')}
+                                    value={user.currentFitness}
+                                    onChange={updateFitness}
+                                    description="Rate your overall running fitness level"
+                                />
+                                
+                                <PremiumSlider
+                                    label={t('currentCondition')}
+                                    value={user.currentRPE}
+                                    onChange={updateRPE}
+                                    description={`Currently feeling: ${t(rpeDescriptions[user.currentRPE])}`}
+                                />
+                                
+                                <PremiumInput
+                                    label={t('weeklyMileage')}
+                                    type="number"
+                                    value={user.weeklyMileage}
+                                    onChange={updateMileage}
+                                    min="5"
+                                    max="200"
+                                />
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <PremiumInput label={t('raceDistance')}>
+                                        <select
+                                            value={user.goalRace.distance}
+                                            onChange={updateRaceDistance}
+                                            className="w-full p-4 rounded-xl input-premium text-gray-800 font-medium"
+                                        >
+                                            <option value="">{t('selectRace')}</option>
+                                            <option value="5k">{t('fiveK')}</option>
+                                            <option value="10k">{t('tenK')}</option>
+                                            <option value="half">{t('halfMarathon')}</option>
+                                            <option value="marathon">{t('marathon')}</option>
+                                        </select>
+                                    </PremiumInput>
+                                    
+                                    <PremiumInput
+                                        label={t('raceDate')}
+                                        type="date"
+                                        value={user.goalRace.date}
+                                        onChange={updateRaceDate}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8">
+                            <button
+                                onClick={completeSetup}
+                                disabled={!user.name}
+                                className="w-full btn-premium bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-8 rounded-xl font-bold text-lg disabled:opacity-50"
+                            >
+                                {t('completeSetup')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Enhanced Workout Display
+        const WorkoutDisplay = memo(({ workout }) => {
+            if (!workout) return null;
+            
+            return (
+                <div className="glass rounded-3xl p-8 text-white animate-scale-in">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-3xl font-bold">{t(workout.type)}</h3>
+                        <div className="text-right">
+                            <div className="text-sm opacity-70">Personalized for</div>
+                            <div className="font-bold text-lg">{workout.personalizedFor.name}</div>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-white bg-opacity-10 rounded-2xl p-6 mb-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="text-center">
+                                <div className="text-3xl font-bold">{workout.duration}</div>
+                                <div className="text-sm opacity-70">{t('minutes')}</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold">{workout.distance}</div>
+                                <div className="text-sm opacity-70">{t('kilometers')}</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-xl font-bold">{workout.pace}</div>
+                                <div className="text-sm opacity-70">min/km</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold">{workout.rpe}</div>
+                                <div className="text-sm opacity-70">RPE</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-4 mb-6">
+                        <div className="bg-green-500 bg-opacity-20 rounded-xl p-4">
+                            <h4 className="font-bold mb-2">{t('warmup')}</h4>
+                            <p className="opacity-90">{workout.warmup}</p>
+                        </div>
+                        <div className="bg-blue-500 bg-opacity-20 rounded-xl p-4">
+                            <h4 className="font-bold mb-2">{t('instructions')}</h4>
+                            <p className="opacity-90">{workout.instructions}</p>
+                        </div>
+                        <div className="bg-purple-500 bg-opacity-20 rounded-xl p-4">
+                            <h4 className="font-bold mb-2">{t('cooldown')}</h4>
+                            <p className="opacity-90">{workout.cooldown}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <button 
+                            onClick={generateSmartWorkout}
+                            className="btn-premium bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 px-6 rounded-xl font-bold"
+                        >
+                            Generate New
+                        </button>
+                        <button className="btn-premium bg-gradient-to-r from-green-500 to-teal-500 text-white py-3 px-6 rounded-xl font-bold">
+                            Save Workout
+                        </button>
+                    </div>
+                </div>
+            );
+        });
+
+        // Loading Animation
+        const LoadingAnimation = () => (
+            <div className="glass rounded-3xl p-12 text-white text-center">
+                <div className="spinner mx-auto mb-6"></div>
+                <h3 className="text-2xl font-bold mb-4">AI Creating Your Perfect Workout</h3>
+                <p className="text-lg opacity-80">
+                    Analyzing your fitness level, current condition, and training goals...
+                </p>
+            </div>
+        );
+
+        // Dashboard View
+        const DashboardView = () => (
+            <div className="space-y-8 animate-slide-up">
+                {/* User Welcome */}
+                <div className="glass rounded-3xl p-8 text-white">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-3xl font-bold mb-2">Welcome back, {user.name}! 👋</h2>
+                            <p className="text-lg opacity-80">
+                                {user.experience} runner • Fitness Level {user.currentFitness}/10 • 
+                                Currently feeling: {t(rpeDescriptions[user.currentRPE])} ({user.currentRPE}/10)
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setCurrentView('setup')}
+                            className="btn-premium bg-white bg-opacity-20 text-white px-6 py-3 rounded-xl font-medium"
+                        >
+                            {t('editProfile')}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Today's Workout */}
+                <div>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-bold text-white">{t('todaysWorkout')}</h2>
+                        <button 
+                            onClick={generateSmartWorkout}
+                            disabled={isGenerating}
+                            className="btn-premium bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl font-bold text-lg disabled:opacity-50"
+                        >
+                            {t('generateWorkout')}
+                        </button>
+                    </div>
+                    
+                    {isGenerating ? <LoadingAnimation /> : <WorkoutDisplay workout={currentWorkout} />}
+                </div>
+
+                {/* Training Zones */}
+                <div>
+                    <h2 className="text-3xl font-bold text-white mb-6">{t('trainingZones')}</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {trainingZones.map((zone) => (
+                            <ZoneCard key={zone.id} zone={zone} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Navigation
+        const Navigation = () => (
+            <nav className="glass-dark sticky top-0 z-50 px-6 py-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center animate-float">
+                            <span className="text-white font-bold text-lg">🏃</span>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">{t('appTitle')}</h1>
+                            <p className="text-sm text-white opacity-70">{t('subtitle')}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={toggleLanguage}
+                            className="btn-premium bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg font-medium"
+                        >
+                            {user.preferences.language === 'en' ? 'ไทย' : 'ENG'}
+                        </button>
+                        <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white px-4 py-2 rounded-lg font-bold text-sm">
+                            ✓ FIXED
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        );
+
+        // Update notification visibility
+        useEffect(() => {
+            const notification = document.getElementById('notification');
+            if (notification) {
+                if (showNotification) {
+                    notification.classList.add('show');
+                } else {
+                    notification.classList.remove('show');
+                }
+            }
+        }, [showNotification]);
+
+        // Main App Render
+        return (
+            <div className={`min-h-screen relative z-10 ${user.preferences.language === 'th' ? 'thai-font' : ''}`}>
+                <Navigation />
+                <main className="max-w-7xl mx-auto px-4 py-8">
+                    {currentView === 'setup' ? <ProfileSetup /> : <DashboardView />}
+                </main>
+            </div>
+        );
+    };
+
+    // Render the app
+    ReactDOM.render(<MarathonTrainerApp />, document.getElementById('marathon-trainer-app'));
+    </script>
+</body>
+</html>

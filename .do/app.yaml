@@ -1,0 +1,27 @@
+name: tri-nirvana-web
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: your-github-username/tri-nirvana-web
+    branch: main
+    deploy_on_push: true
+  run_command: php -S 0.0.0.0:8080 -t public
+  environment_slug: php
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 8080
+  routes:
+  - path: /
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: APP_ENV
+    value: production
+    scope: RUN_AND_BUILD_TIME
+databases:
+- name: tri-nirvana-db
+  engine: PG
+  version: "14"
+  size: db-s-dev-database

@@ -1,0 +1,114 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tri_nirvana_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, json, curl, pdo, pdo_pgsql, redis
+        tools: composer:v2
+        coverage: xdebug
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Node dependencies
+      run: npm ci
+
+    - name: Build frontend assets
+      run: npm run build
+
+    - name: Copy environment file
+      run: |
+        cp .env.example .env
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tri_nirvana_test" >> .env
+        echo "REDIS_URL=redis://localhost:6379" >> .env
+
+    - name: Run PHP tests
+      run: |
+        echo "Running PHP unit tests..."
+        # Add actual test commands here when tests are created
+        # vendor/bin/phpunit --coverage-text --coverage-clover coverage.xml
+
+    - name: Run JavaScript tests
+      run: |
+        echo "Running JavaScript tests..."
+        # Add actual test commands here when tests are created
+        # npm test
+
+    - name: Check PHP code style
+      run: |
+        echo "Checking PHP code style..."
+        # Add PHP CS Fixer or similar tool
+        # vendor/bin/php-cs-fixer fix --dry-run --diff
+
+    - name: Check JavaScript code style
+      run: |
+        echo "Checking JavaScript code style..."
+        # Add ESLint or similar tool
+        # npm run lint
+
+    - name: Security audit
+      run: |
+        echo "Running security audit..."
+        # composer audit
+        # npm audit
+
+    - name: Upload coverage reports
+      if: success()
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: true
