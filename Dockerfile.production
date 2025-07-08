@@ -25,11 +25,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy composer files
-COPY composer.json composer.lock ./
+# Copy composer files if they exist
+COPY composer.json* composer.lock* ./
 
-# Install PHP dependencies (if any)
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies (if composer.json exists)
+RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloader; fi
 
 # Copy application code
 COPY . .
